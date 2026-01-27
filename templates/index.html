@@ -1,0 +1,983 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#10b981">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Surf Judge">
+    <link rel="manifest" href="/static/manifest.json">
+    <title>Surf Heat Judge Pro</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #0f172a;
+            min-height: 100vh;
+            padding: 20px;
+            color: #e2e8f0;
+        }
+        
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            text-align: center;
+            color: #f8fafc;
+            margin-bottom: 24px;
+            font-size: 2em;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+        }
+        
+        .header-section {
+            background: #1e293b;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 20px;
+            border: 1px solid #334155;
+        }
+        
+        .metadata-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+        
+        .metadata-field {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .metadata-field label {
+            font-weight: 600;
+            margin-bottom: 6px;
+            color: #94a3b8;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        
+        .metadata-field input,
+        .metadata-field textarea {
+            padding: 10px 14px;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            font-size: 14px;
+            background: #0f172a;
+            color: #e2e8f0;
+            transition: all 0.2s ease;
+        }
+        
+        .metadata-field input:focus,
+        .metadata-field textarea:focus {
+            outline: none;
+            border-color: #3b82f6;
+            background: #1e293b;
+        }
+        
+        .metadata-field textarea {
+            resize: vertical;
+            min-height: 80px;
+            font-family: inherit;
+        }
+        
+        .notes-field {
+            grid-column: 1 / -1;
+        }
+        
+        .timer-section {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 24px;
+            padding: 20px;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            border-radius: 10px;
+        }
+        
+        .timer-display {
+            font-size: 56px;
+            font-weight: 700;
+            font-family: 'SF Mono', 'Monaco', 'Courier New', monospace;
+            letter-spacing: -0.02em;
+        }
+        
+        .timer-display.warning {
+            color: #fbbf24;
+        }
+        
+        .timer-display.critical {
+            color: #ef4444;
+            animation: pulse 1s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        
+        .controls {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            font-size: 14px;
+            font-weight: 600;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            letter-spacing: 0.01em;
+        }
+        
+        .btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.4);
+        }
+        
+        .btn:active {
+            transform: translateY(0);
+        }
+        
+        .btn-start { background: #10b981; color: white; }
+        .btn-start:hover { background: #059669; }
+        
+        .btn-close { background: #ef4444; color: white; }
+        .btn-close:hover { background: #dc2626; }
+        
+        .btn-reopen { background: #f59e0b; color: white; }
+        .btn-reopen:hover { background: #d97706; }
+        
+        .btn-reset { background: #64748b; color: white; }
+        .btn-reset:hover { background: #475569; }
+        
+        .btn-export { background: #8b5cf6; color: white; }
+        .btn-export:hover { background: #7c3aed; }
+        
+        .priority-bar-container {
+            background: #1e293b;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid #334155;
+        }
+        
+        .priority-bar-container h3 {
+            color: #cbd5e1;
+            margin-bottom: 16px;
+            text-align: center;
+            font-size: 14px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        
+        .priority-bar {
+            display: flex;
+            gap: 10px;
+            justify-content: space-between;
+            align-items: stretch;
+        }
+        
+        .priority-item {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 16px 12px;
+            border-radius: 10px;
+            background: #334155;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+            min-height: 80px;
+            border: 2px solid transparent;
+        }
+        
+        .priority-item:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+            border-color: #64748b;
+        }
+        
+        .priority-item:nth-child(1) {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            box-shadow: 0 4px 16px rgba(16, 185, 129, 0.5);
+        }
+        
+        .priority-item:nth-child(2) {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: white;
+            box-shadow: 0 4px 16px rgba(59, 130, 246, 0.3);
+        }
+        
+        .priority-item.tied {
+            background: #475569;
+            color: #cbd5e1;
+        }
+        
+        .priority-number {
+            font-size: 28px;
+            margin-bottom: 6px;
+            font-weight: 700;
+        }
+        
+        .priority-color {
+            font-size: 15px;
+            letter-spacing: 0.02em;
+        }
+        
+        .priority-label {
+            font-size: 10px;
+            opacity: 0.9;
+            margin-top: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 320px;
+            gap: 20px;
+        }
+        
+        .grid-container {
+            background: #1e293b;
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid #334155;
+            overflow-x: auto;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 6px;
+        }
+        
+        th {
+            background: #334155;
+            color: #cbd5e1;
+            padding: 10px;
+            font-weight: 600;
+            border-radius: 6px;
+            text-align: center;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        
+        td {
+            padding: 6px;
+            text-align: center;
+        }
+        
+        .color-cell {
+            font-weight: 700;
+            font-size: 14px;
+            padding: 14px;
+            border-radius: 8px;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            letter-spacing: 0.02em;
+        }
+        
+        .color-cell:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+        }
+        
+        .interference-btn {
+            position: absolute;
+            bottom: 3px;
+            right: 3px;
+            padding: 3px 7px;
+            background: #475569;
+            color: #cbd5e1;
+            border: none;
+            border-radius: 4px;
+            font-size: 9px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            letter-spacing: 0.05em;
+        }
+        
+        .interference-btn:hover {
+            background: #64748b;
+        }
+        
+        .interference-btn.level-1 {
+            background: #f59e0b;
+            color: white;
+            box-shadow: 0 0 12px rgba(245, 158, 11, 0.6);
+        }
+        
+        .interference-btn.level-2 {
+            background: #ef4444;
+            color: white;
+            box-shadow: 0 0 12px rgba(239, 68, 68, 0.6);
+        }
+        
+        .color-red { background: #991b1b; color: #fecaca; border: 1px solid #7f1d1d; }
+        .color-blue { background: #1e3a8a; color: #bfdbfe; border: 1px solid #1e40af; }
+        .color-yellow { background: #854d0e; color: #fef08a; border: 1px solid #713f12; }
+        .color-green { background: #14532d; color: #bbf7d0; border: 1px solid #166534; }
+        .color-white { background: #374151; color: #f9fafb; border: 1px solid #4b5563; }
+        
+        input[type="number"] {
+            width: 58px;
+            padding: 9px 5px;
+            font-size: 14px;
+            font-weight: 600;
+            text-align: center;
+            border: 1px solid #334155;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+            background: #0f172a;
+            color: #e2e8f0;
+        }
+        
+        input[type="number"]:focus {
+            outline: none;
+            border-color: #3b82f6;
+            background: #1e293b;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+        
+        input[type="number"].best-score {
+            background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+            border-color: #d97706;
+            color: #78350f;
+            font-weight: 700;
+        }
+        
+        .live-rankings {
+            background: #1e293b;
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid #334155;
+        }
+        
+        .live-rankings h3 {
+            color: #cbd5e1;
+            margin-bottom: 16px;
+            text-align: center;
+            font-size: 14px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        
+        .ranking-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 14px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            border: 1px solid transparent;
+        }
+        
+        .ranking-item:hover {
+            transform: translateX(4px);
+        }
+        
+        .ranking-item:nth-child(1) { 
+            background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+            color: #78350f;
+            box-shadow: 0 4px 16px rgba(251, 191, 36, 0.4);
+            border-color: #d97706;
+        }
+        .ranking-item:nth-child(2) { 
+            background: linear-gradient(135deg, #94a3b8 0%, #cbd5e1 100%);
+            color: #0f172a;
+            box-shadow: 0 4px 16px rgba(148, 163, 184, 0.3);
+            border-color: #64748b;
+        }
+        .ranking-item:nth-child(3) { 
+            background: linear-gradient(135deg, #d97706 0%, #f59e0b 100%);
+            color: #78350f;
+            box-shadow: 0 4px 16px rgba(217, 119, 6, 0.3);
+            border-color: #b45309;
+        }
+        .ranking-item:nth-child(n+4) { 
+            background: #334155;
+            color: #cbd5e1;
+            border-color: #475569;
+        }
+        
+        .ranking-position {
+            font-size: 22px;
+            margin-right: 10px;
+        }
+        
+        .ranking-waves {
+            font-size: 11px;
+            color: inherit;
+            opacity: 0.8;
+            margin-top: 4px;
+            font-weight: 500;
+        }
+        
+        .interference-indicator {
+            font-size: 12px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            background: rgba(239, 68, 68, 0.2);
+            color: #fca5a5;
+            margin-left: 6px;
+            font-weight: 600;
+        }
+        
+        .results {
+            margin-top: 24px;
+            background: #1e293b;
+            border-radius: 12px;
+            padding: 24px;
+            border: 1px solid #334155;
+            display: none;
+        }
+        
+        .results.show {
+            display: block;
+        }
+        
+        .results h2 {
+            color: #f8fafc;
+            margin-bottom: 20px;
+            text-align: center;
+            font-weight: 700;
+        }
+        
+        .export-buttons {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+        
+        @media (max-width: 1200px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 1.5em;
+            }
+            
+            input[type="number"] {
+                width: 48px;
+                padding: 7px 3px;
+                font-size: 13px;
+            }
+            
+            th {
+                padding: 7px;
+                font-size: 10px;
+            }
+            
+            .btn {
+                padding: 10px 18px;
+                font-size: 13px;
+            }
+            
+            .timer-display {
+                font-size: 40px;
+            }
+            
+            .priority-bar {
+                gap: 6px;
+            }
+            
+            .priority-item {
+                min-height: 70px;
+                padding: 10px 6px;
+            }
+            
+            .priority-number {
+                font-size: 22px;
+            }
+            
+            .priority-color {
+                font-size: 13px;
+            }
+            
+            .priority-label {
+                font-size: 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏄 Surf Heat Judge Pro</h1>
+        
+        <!-- Header Section -->
+        <div class="header-section">
+            <div class="metadata-grid">
+                <div class="metadata-field">
+                    <label>Heat Number</label>
+                    <input type="text" id="heat_number" value="{{ metadata.heat_number }}" onchange="updateMetadata()">
+                </div>
+                <div class="metadata-field">
+                    <label>Round</label>
+                    <input type="text" id="round" value="{{ metadata.round }}" onchange="updateMetadata()">
+                </div>
+                <div class="metadata-field">
+                    <label>Location</label>
+                    <input type="text" id="location" value="{{ metadata.location }}" onchange="updateMetadata()">
+                </div>
+                <div class="metadata-field">
+                    <label>Duration (min)</label>
+                    <input type="number" id="duration" value="{{ metadata.duration }}" min="1" max="60" onchange="updateMetadata()">
+                </div>
+                <div class="metadata-field notes-field">
+                    <label>Notes</label>
+                    <textarea id="notes" onchange="updateMetadata()" placeholder="Add notes about the heat...">{{ metadata.notes }}</textarea>
+                </div>
+            </div>
+            
+            <div class="timer-section">
+                <button class="btn btn-start" onclick="startTimer()" id="startBtn">▶️ Start Timer</button>
+                <div class="timer-display" id="timerDisplay">{{ metadata.duration }}:00</div>
+            </div>
+        </div>
+        
+        <!-- Controls -->
+        <div class="controls">
+            <button class="btn btn-close" onclick="closeHeat()" id="closeBtn">🏁 Close Heat</button>
+            <button class="btn btn-reopen" onclick="reopenHeat()" id="reopenBtn" style="display:none;">🔓 Reopen</button>
+            <button class="btn btn-reset" onclick="resetHeat()">🔄 Reset</button>
+        </div>
+        
+        <!-- Priority Bar -->
+        <div class="priority-bar-container">
+            <h3>🎯 Priority Order (Click to send right ➡️)</h3>
+            <div id="priorityOrder" class="priority-bar"></div>
+        </div>
+        
+        <!-- Main Grid -->
+        <div class="main-grid">
+            <div class="grid-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Surfer</th>
+                            <th>W1</th>
+                            <th>W2</th>
+                            <th>W3</th>
+                            <th>W4</th>
+                            <th>W5</th>
+                            <th>W6</th>
+                            <th>W7</th>
+                            <th>W8</th>
+                            <th>W9</th>
+                            <th>W10</th>
+                            <th>W11</th>
+                            <th>W12</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for idx, surfer in surfers %}
+                        <tr>
+                            <td class="color-cell color-{{ surfer.color|lower }}" onclick="sendToBackOfQueue({{ idx }})" title="Click to send to back of priority queue">
+                                {{ surfer.color }}
+                                <button class="interference-btn {% if surfer.interference == 1 %}level-1{% elif surfer.interference == 2 %}level-2{% endif %}" 
+                                        onclick="event.stopPropagation(); toggleInterference({{ idx }})" 
+                                        id="interference-{{ idx }}"
+                                        title="Click: None → INT-1 (½ 2nd wave) → INT-2 (½ both waves) → None">INT</button>
+                            </td>
+                            {% for wave_idx in range(12) %}
+                            <td>
+                                <input 
+                                    type="number" 
+                                    min="0" 
+                                    max="10" 
+                                    step="0.1"
+                                    data-surfer="{{ idx }}"
+                                    data-wave="{{ wave_idx }}"
+                                    id="score-{{ idx }}-{{ wave_idx }}"
+                                    value="{{ surfer.waves[wave_idx] if surfer.waves[wave_idx] is not none else '' }}"
+                                    onchange="updateScore(this)"
+                                >
+                            </td>
+                            {% endfor %}
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Live Rankings -->
+            <div class="live-rankings">
+                <h3>📊 Live Rankings</h3>
+                <div id="liveRankings"></div>
+            </div>
+        </div>
+        
+        <!-- Results Section -->
+        <div class="results" id="results">
+            <h2>🏆 Final Results</h2>
+            <div class="export-buttons">
+                <a href="/export_csv" class="btn btn-export" download>📊 Export CSV</a>
+                <a href="/export_pdf" class="btn btn-export" download>📄 Export PDF</a>
+            </div>
+            <div id="results-content"></div>
+        </div>
+    </div>
+    
+    <script>
+        let timerInterval = null;
+        let startTime = null;
+        let duration = {{ metadata.duration }};
+        
+        function updateMetadata() {
+            const metadata = {
+                heat_number: document.getElementById('heat_number').value,
+                round: document.getElementById('round').value,
+                location: document.getElementById('location').value,
+                duration: parseInt(document.getElementById('duration').value),
+                notes: document.getElementById('notes').value
+            };
+            
+            duration = metadata.duration;
+            document.getElementById('timerDisplay').textContent = `${duration}:00`;
+            
+            fetch('/update_metadata', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(metadata)
+            });
+        }
+        
+        function startTimer() {
+            if (timerInterval) return;
+            
+            fetch('/start_timer', { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    startTime = new Date(data.start_time);
+                    document.getElementById('startBtn').disabled = true;
+                    document.getElementById('startBtn').style.opacity = '0.5';
+                    
+                    timerInterval = setInterval(updateTimerDisplay, 100);
+                });
+        }
+        
+        function updateTimerDisplay() {
+            const now = new Date();
+            const elapsed = Math.floor((now - startTime) / 1000);
+            const totalSeconds = duration * 60;
+            const remaining = Math.max(0, totalSeconds - elapsed);
+            
+            const minutes = Math.floor(remaining / 60);
+            const seconds = remaining % 60;
+            
+            const display = document.getElementById('timerDisplay');
+            display.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+            
+            if (remaining <= 60) {
+                display.className = 'timer-display critical';
+            } else if (remaining <= 300) {
+                display.className = 'timer-display warning';
+            } else {
+                display.className = 'timer-display';
+            }
+            
+            if (remaining === 0) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+            }
+        }
+        
+        function updateScore(input) {
+            const surferIdx = input.dataset.surfer;
+            const waveIdx = input.dataset.wave;
+            const score = input.value;
+            
+            fetch('/update_score', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    surfer_idx: parseInt(surferIdx),
+                    wave_idx: parseInt(waveIdx),
+                    score: score
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    alert(data.error);
+                    input.value = '';
+                } else {
+                    updateLiveRankings(data.rankings);
+                    highlightBestScores(data.rankings);
+                }
+            });
+        }
+        
+        function sendToBackOfQueue(surferIdx) {
+            fetch('/toggle_priority', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ surfer_idx: surferIdx })
+            })
+            .then(response => response.json())
+            .then(data => {
+                updatePriorityDisplay(data.priority_order);
+            });
+        }
+        
+        function updatePriorityDisplay(priorityOrder) {
+            const container = document.getElementById('priorityOrder');
+            let html = '';
+            
+            priorityOrder.forEach((item, index) => {
+                const isTied = item.position === 'TIED';
+                const isFirst = !isTied && item.position === 1;
+                
+                const emoji = isTied ? '=' : (isFirst ? '👑' : item.position);
+                const label = isTied ? 'TIED' : (isFirst ? 'HAS PRIORITY' : '');
+                const tiedClass = isTied ? 'tied' : '';
+                
+                html += `
+                    <div class="priority-item ${tiedClass}" onclick="sendToBackOfQueue(${item.idx})" title="Click to send right">
+                        <div class="priority-number">${emoji}</div>
+                        <div class="priority-color">${item.color}</div>
+                        ${label ? `<div class="priority-label">${label}</div>` : ''}
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+        }
+        
+        function toggleInterference(surferIdx) {
+            fetch('/toggle_interference', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ surfer_idx: surferIdx })
+            })
+            .then(response => response.json())
+            .then(data => {
+                const btn = document.getElementById(`interference-${surferIdx}`);
+                btn.className = 'interference-btn';
+                
+                if (data.interference === 1) {
+                    btn.classList.add('level-1');
+                } else if (data.interference === 2) {
+                    btn.classList.add('level-2');
+                }
+                
+                updateLiveRankings(data.rankings);
+                highlightBestScores(data.rankings);
+            });
+        }
+        
+        function highlightBestScores(rankings) {
+            document.querySelectorAll('input[type="number"]').forEach(input => {
+                input.classList.remove('best-score');
+            });
+            
+            rankings.forEach(result => {
+                const surferIdx = result.idx;
+                const topScores = result.top_waves;
+                
+                const waves = [];
+                for (let i = 0; i < 12; i++) {
+                    const input = document.getElementById(`score-${surferIdx}-${i}`);
+                    if (input.value) {
+                        waves.push({ idx: i, score: parseFloat(input.value) });
+                    }
+                }
+                
+                waves.sort((a, b) => b.score - a.score);
+                const topTwo = waves.slice(0, 2);
+                
+                topTwo.forEach(wave => {
+                    const input = document.getElementById(`score-${surferIdx}-${wave.idx}`);
+                    input.classList.add('best-score');
+                });
+            });
+        }
+        
+        function updateLiveRankings(rankings) {
+            const container = document.getElementById('liveRankings');
+            let html = '';
+            
+            rankings.forEach(result => {
+                const emoji = result.position === 1 ? '🥇' : 
+                             result.position === 2 ? '🥈' : 
+                             result.position === 3 ? '🥉' : 
+                             `${result.position}.`;
+                
+                const wavesStr = result.top_waves.map(w => w.toFixed(1)).join(' + ');
+                
+                let interferenceStr = '';
+                if (result.interference === 1) {
+                    interferenceStr = '<span class="interference-indicator">INT-1</span>';
+                } else if (result.interference === 2) {
+                    interferenceStr = '<span class="interference-indicator">INT-2</span>';
+                }
+                
+                html += `
+                    <div class="ranking-item">
+                        <div>
+                            <span class="ranking-position">${emoji}</span>
+                            <strong>${result.color}</strong>${interferenceStr}
+                            <div class="ranking-waves">${wavesStr || 'No scores'}</div>
+                        </div>
+                        <div style="font-size: 20px;">${result.total.toFixed(2)}</div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+        }
+        
+        function closeHeat() {
+            fetch('/close_heat', { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    displayResults(data.results);
+                    document.getElementById('closeBtn').style.display = 'none';
+                    document.getElementById('reopenBtn').style.display = 'inline-block';
+                    
+                    if (timerInterval) {
+                        clearInterval(timerInterval);
+                        timerInterval = null;
+                    }
+                });
+        }
+        
+        function reopenHeat() {
+            fetch('/reopen_heat', { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('results').classList.remove('show');
+                    document.getElementById('closeBtn').style.display = 'inline-block';
+                    document.getElementById('reopenBtn').style.display = 'none';
+                });
+        }
+        
+        function displayResults(results) {
+            const resultsDiv = document.getElementById('results');
+            const resultsContent = document.getElementById('results-content');
+            
+            let html = '';
+            results.forEach(result => {
+                const emoji = result.position === 1 ? '🥇' : 
+                             result.position === 2 ? '🥈' : 
+                             result.position === 3 ? '🥉' : 
+                             `${result.position}.`;
+                
+                const wavesStr = result.top_waves.map(w => w.toFixed(1)).join(' + ');
+                
+                let interferenceStr = '';
+                if (result.interference === 1) {
+                    interferenceStr = ' <span class="interference-indicator">INT-1 (-½ 2nd wave)</span>';
+                } else if (result.interference === 2) {
+                    interferenceStr = ' <span class="interference-indicator">INT-2 (-½ both waves)</span>';
+                }
+                
+                html += `
+                    <div class="ranking-item">
+                        <div>
+                            <span class="ranking-position">${emoji}</span>
+                            <strong>${result.color}</strong>${interferenceStr}
+                            <div class="ranking-waves">${wavesStr}</div>
+                        </div>
+                        <div style="font-size: 24px;">${result.total.toFixed(2)}</div>
+                    </div>
+                `;
+            });
+            
+            resultsContent.innerHTML = html;
+            resultsDiv.classList.add('show');
+            resultsDiv.scrollIntoView({ behavior: 'smooth' });
+        }
+        
+        function resetHeat() {
+            if (confirm('Are you sure you want to reset all scores and timer?')) {
+                fetch('/reset_heat', { method: 'POST' })
+                    .then(response => response.json())
+                    .then(data => {
+                        document.querySelectorAll('input[type="number"]').forEach(input => {
+                            input.value = '';
+                            input.classList.remove('best-score');
+                        });
+                        
+                        document.querySelectorAll('.interference-btn').forEach(el => {
+                            el.className = 'interference-btn';
+                        });
+                        
+                        if (timerInterval) {
+                            clearInterval(timerInterval);
+                            timerInterval = null;
+                        }
+                        startTime = null;
+                        document.getElementById('startBtn').disabled = false;
+                        document.getElementById('startBtn').style.opacity = '1';
+                        document.getElementById('timerDisplay').textContent = `${duration}:00`;
+                        document.getElementById('timerDisplay').className = 'timer-display';
+                        
+                        document.getElementById('results').classList.remove('show');
+                        document.getElementById('closeBtn').style.display = 'inline-block';
+                        document.getElementById('reopenBtn').style.display = 'none';
+                        
+                        document.getElementById('liveRankings').innerHTML = '';
+                        document.getElementById('notes').value = '';
+                        
+                        fetch('/get_priority_order')
+                            .then(response => response.json())
+                            .then(data => updatePriorityDisplay(data.priority_order));
+                    });
+            }
+        }
+        
+        // Load initial live rankings and priority order
+        fetch('/get_rankings')
+            .then(response => response.json())
+            .then(data => {
+                updateLiveRankings(data.rankings);
+                highlightBestScores(data.rankings);
+            });
+        
+        fetch('/get_priority_order')
+            .then(response => response.json())
+            .then(data => updatePriorityDisplay(data.priority_order));
+        
+        // Register service worker for PWA
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/static/service-worker.js')
+                .then(() => console.log('Service Worker registered'))
+                .catch(err => console.log('Service Worker registration failed:', err));
+        }
+    </script>
+</body>
+</html>
