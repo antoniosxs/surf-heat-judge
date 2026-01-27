@@ -1,0 +1,25 @@
+# App Icon Instructions
+
+You need to create 2 simple icon files and put them in the /static folder:
+
+1. icon-192.png (192x192 pixels)
+2. icon-512.png (512x512 pixels)
+
+## Quick Way to Make Icons:
+1. Go to https://favicon.io/favicon-generator/
+2. Choose:
+   - Text: 🏄 (or just "SJ")
+   - Background: #10b981 (green)
+   - Font: Bold
+3. Generate and download
+4. Rename the 192x192 and 512x512 files
+5. Put them in the /static folder
+
+OR
+
+Use Canva/Photoshop to make a simple square with:
+- Background: Dark blue (#0f172a) or Green (#10b981)
+- Text: "SURF JUDGE" or just a wave emoji 🌊
+- Export as PNG at 512x512 and 192x192
+
+The app will work without icons, but they make it look professional on your phone's home screen!
