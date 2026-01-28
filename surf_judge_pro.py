@@ -22,11 +22,11 @@ current_heat = {
         'notes': ''
     },
     'surfers': [
-        {'color': 'Red', 'waves': [None] * 12, 'interference': 0},  # 0 = none, 1 = second wave, 2 = first wave
-        {'color': 'Blue', 'waves': [None] * 12, 'interference': 0},
+        {'color': 'Red', 'waves': [None] * 12, 'interference': 0},
         {'color': 'Yellow', 'waves': [None] * 12, 'interference': 0},
-        {'color': 'Green', 'waves': [None] * 12, 'interference': 0},
-        {'color': 'White', 'waves': [None] * 12, 'interference': 0}
+        {'color': 'Black', 'waves': [None] * 12, 'interference': 0},
+        {'color': 'White', 'waves': [None] * 12, 'interference': 0},
+        {'color': 'Blue', 'waves': [None] * 12, 'interference': 0}
     ],
     'priority_order': []  # Empty = no priority established yet
 }
