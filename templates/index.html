@@ -285,14 +285,13 @@
         .priority-bar-container {
             background: #1e293b;
             border-radius: 10px;
-            padding: 14px 16px;
-            margin-bottom: 12px;
+            padding: 16px;
             border: 1px solid #334155;
         }
         
         .priority-bar-container h3 {
             color: #cbd5e1;
-            margin-bottom: 12px;
+            margin-bottom: 14px;
             text-align: center;
             font-size: 13px;
             font-weight: 600;
@@ -305,6 +304,7 @@
             gap: 10px;
             justify-content: space-between;
             align-items: stretch;
+            min-height: 100px;
         }
         
         .priority-item {
@@ -369,6 +369,13 @@
         .main-grid {
             display: grid;
             grid-template-columns: 1fr 320px;
+            gap: 12px;
+            align-items: start;
+        }
+        
+        .left-column {
+            display: flex;
+            flex-direction: column;
             gap: 12px;
         }
         
@@ -698,30 +705,27 @@
                 </div>
             </div>
             </div>
-            
-            <!-- Timer and Controls Row -->
-            <div class="timer-controls-row">
-                <button class="btn btn-start" onclick="startTimer()" id="startBtn">▶️ Start</button>
-                <div class="timer-display" id="timerDisplay">{{ metadata.duration }}:00</div>
-                <div class="inline-controls">
-                    <button class="btn btn-notes" onclick="openNotesModal()">📝 Notes</button>
-                    <button class="btn btn-close" onclick="closeHeat()" id="closeBtn">🏁 Close</button>
-                    <button class="btn btn-reopen" onclick="reopenHeat()" id="reopenBtn" style="display:none;">🔓 Reopen</button>
-                    <button class="btn btn-reset" onclick="resetHeat()">🔄 Reset</button>
-                </div>
+        </div>
+        
+        <!-- Timer and Controls Row (Full Width) -->
+        <div class="timer-controls-row">
+            <button class="btn btn-start" onclick="startTimer()" id="startBtn">▶️ Start</button>
+            <div class="timer-display" id="timerDisplay">{{ metadata.duration }}:00</div>
+            <div class="inline-controls">
+                <button class="btn btn-notes" onclick="openNotesModal()">📝 Notes</button>
+                <button class="btn btn-close" onclick="closeHeat()" id="closeBtn">🏁 Close</button>
+                <button class="btn btn-reopen" onclick="reopenHeat()" id="reopenBtn" style="display:none;">🔓 Reopen</button>
+                <button class="btn btn-reset" onclick="resetHeat()">🔄 Reset</button>
             </div>
         </div>
         
-        <!-- Priority Bar -->
-        <div class="priority-bar-container">
-            <h3>🎯 Priority Order (Click to send right ➡️)</h3>
-            <div id="priorityOrder" class="priority-bar"></div>
-        </div>
-        
-        <!-- Main Grid -->
+        <!-- Main Content: Grid+Priority (left) and Rankings (right) -->
         <div class="main-grid">
-            <div class="grid-container">
-                <table>
+            <!-- Left Column: Grid + Priority -->
+            <div class="left-column">
+                <!-- Score Grid -->
+                <div class="grid-container">
+                    <table>
                     <thead>
                         <tr>
                             <th>Surfer</th>
@@ -770,7 +774,14 @@
                 </table>
             </div>
             
-            <!-- Live Rankings -->
+            <!-- Priority Bar (below grid, same column) -->
+            <div class="priority-bar-container">
+                <h3>🎯 Priority Order (Click to send right ➡️)</h3>
+                <div id="priorityOrder" class="priority-bar"></div>
+            </div>
+            </div>
+            
+            <!-- Right Column: Live Rankings -->
             <div class="live-rankings">
                 <h3>📊 Live Rankings</h3>
                 <div id="liveRankings"></div>
