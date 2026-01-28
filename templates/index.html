@@ -57,10 +57,10 @@
         }
         
         .metadata-collapsed {
-            padding: 10px 16px;
-            background: #1e293b;
+            padding: 0;
+            background: transparent;
             border-radius: 8px;
-            border: 1px solid #334155;
+            border: none;
             font-size: 13px;
             color: #cbd5e1;
             margin-bottom: 12px;
@@ -116,6 +116,44 @@
         
         .notes-field {
             grid-column: 1 / -1;
+        }
+        
+        .surfer-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 12px;
+        }
+        
+        .surfer-field {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        
+        .surfer-field label {
+            font-weight: 600;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        
+        .surfer-field input {
+            padding: 8px 12px;
+            border: 1px solid #334155;
+            border-radius: 6px;
+            font-size: 13px;
+            background: #0f172a;
+            color: #e2e8f0;
+        }
+        
+        .surfer-field input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            background: #1e293b;
+        }
+        
+        .surfer-field input[type="number"] {
+            font-weight: 600;
         }
         
         .timer-controls-row {
@@ -368,7 +406,7 @@
         
         .main-grid {
             display: grid;
-            grid-template-columns: 1fr 320px;
+            grid-template-columns: 64% 34%;
             gap: 12px;
             align-items: start;
         }
@@ -377,6 +415,8 @@
             display: flex;
             flex-direction: column;
             gap: 12px;
+            min-width: 0;
+            max-width: 100%;
         }
         
         .grid-container {
@@ -385,10 +425,12 @@
             padding: 14px;
             border: 1px solid #334155;
             overflow-x: auto;
+            max-width: 100%;
         }
         
         table {
             width: 100%;
+            min-width: 900px;
             border-collapse: separate;
             border-spacing: 4px;
         }
@@ -607,6 +649,103 @@
             margin-bottom: 20px;
         }
         
+        .performance-tracker {
+            margin-top: 24px;
+            background: #1e293b;
+            border-radius: 12px;
+            padding: 24px;
+            border: 1px solid #334155;
+        }
+        
+        .performance-tracker h2 {
+            color: #f8fafc;
+            margin-bottom: 20px;
+            text-align: center;
+            font-weight: 700;
+        }
+        
+        .tracker-container {
+            overflow-x: auto;
+        }
+        
+        .tracker-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            background: #0f172a;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        .tracker-table th {
+            background: #334155;
+            color: #cbd5e1;
+            padding: 12px 16px;
+            font-weight: 600;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            text-align: center;
+            border-bottom: 2px solid #1e293b;
+        }
+        
+        .tracker-table th:first-child {
+            text-align: left;
+        }
+        
+        .tracker-table td {
+            padding: 12px 16px;
+            text-align: center;
+            border-bottom: 1px solid #1e293b;
+            color: #e2e8f0;
+            font-size: 14px;
+        }
+        
+        .tracker-table td:first-child {
+            text-align: left;
+            font-weight: 600;
+            color: #f1f5f9;
+        }
+        
+        .tracker-table tbody tr:hover {
+            background: #1e293b;
+        }
+        
+        .tracker-score {
+            font-weight: 600;
+            font-family: 'SF Mono', 'Monaco', monospace;
+        }
+        
+        .tracker-goal {
+            font-weight: 700;
+            color: #fbbf24;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        
+        .status-hit {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+        }
+        
+        .status-above {
+            background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+            color: #78350f;
+        }
+        
+        .status-below {
+            background: #475569;
+            color: #cbd5e1;
+        }
+        
         @media (max-width: 1200px) {
             .main-grid {
                 grid-template-columns: 1fr;
@@ -664,11 +803,16 @@
 <body>
     <div class="container">
         <!-- KSS Header -->
-        <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 16px;">
-            <img src="/static/kss.png" alt="KSS" style="width: 48px; height: 48px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
-            <div>
-                <h1 style="margin: 0; font-size: 28px; font-weight: 700; color: #f1f5f9; line-height: 1;">KSS</h1>
-                <p style="margin: 2px 0 0 0; font-size: 13px; color: #94a3b8; font-weight: 500;">Karibe Surf Score</p>
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 16px;">
+            <div style="display: flex; align-items: center; gap: 16px;">
+                <img src="/static/kss.png" alt="KSS" style="width: 48px; height: 48px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
+                <div>
+                    <h1 style="margin: 0; font-size: 28px; font-weight: 700; color: #f1f5f9; line-height: 1;">KSS</h1>
+                    <p style="margin: 2px 0 0 0; font-size: 13px; color: #94a3b8; font-weight: 500;">Karibe Surf Score</p>
+                </div>
+            </div>
+            <div style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); padding: 8px 16px; border-radius: 8px; box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);">
+                <span style="font-size: 14px; font-weight: 700; color: #78350f; text-transform: uppercase; letter-spacing: 0.05em;">🏋️ Coach Mode</span>
             </div>
         </div>
         
@@ -700,6 +844,40 @@
                     <label>Duration (min)</label>
                     <input type="number" id="duration" value="{{ metadata.duration }}" min="1" max="60" onchange="updateMetadata()">
                 </div>
+                </div>
+                
+                <!-- Surfer Names and Goals -->
+                <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid #334155;">
+                    <h3 style="color: #cbd5e1; font-size: 14px; font-weight: 600; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.05em;">👥 Surfers & Goals</h3>
+                    <div class="surfer-grid">
+                        <div class="surfer-field">
+                            <label style="color: #fecaca;">🔴 Red Surfer</label>
+                            <input type="text" id="red_name" placeholder="Name" onchange="updateSurferData()">
+                            <input type="number" id="red_goal" placeholder="Goal" step="0.1" min="0" max="20" onchange="updateSurferData()">
+                        </div>
+                        <div class="surfer-field">
+                            <label style="color: #fef08a;">🟡 Yellow Surfer</label>
+                            <input type="text" id="yellow_name" placeholder="Name" onchange="updateSurferData()">
+                            <input type="number" id="yellow_goal" placeholder="Goal" step="0.1" min="0" max="20" onchange="updateSurferData()">
+                        </div>
+                        <div class="surfer-field">
+                            <label style="color: #e2e8f0;">⚫ Black Surfer</label>
+                            <input type="text" id="black_name" placeholder="Name" onchange="updateSurferData()">
+                            <input type="number" id="black_goal" placeholder="Goal" step="0.1" min="0" max="20" onchange="updateSurferData()">
+                        </div>
+                        <div class="surfer-field">
+                            <label style="color: #0f172a; background: #f9fafb; padding: 2px 8px; border-radius: 4px;">⚪ White Surfer</label>
+                            <input type="text" id="white_name" placeholder="Name" onchange="updateSurferData()">
+                            <input type="number" id="white_goal" placeholder="Goal" step="0.1" min="0" max="20" onchange="updateSurferData()">
+                        </div>
+                        <div class="surfer-field">
+                            <label style="color: #bfdbfe;">🔵 Blue Surfer</label>
+                            <input type="text" id="blue_name" placeholder="Name" onchange="updateSurferData()">
+                            <input type="number" id="blue_goal" placeholder="Goal" step="0.1" min="0" max="20" onchange="updateSurferData()">
+                        </div>
+                    </div>
+                </div>
+                
                 <div class="metadata-field notes-field" style="display: none;">
                     <textarea id="notes" onchange="updateMetadata()">{{ metadata.notes }}</textarea>
                 </div>
@@ -798,6 +976,33 @@
             <div id="results-content"></div>
         </div>
         
+        <!-- Performance Tracker Section -->
+        <div class="performance-tracker" id="performanceTracker" style="display: none;">
+            <h2>📈 Session Performance Tracker</h2>
+            <div class="export-buttons" style="margin-bottom: 16px;">
+                <a href="/export_session_csv" class="btn btn-export" download>📊 Export Session CSV</a>
+            </div>
+            <div class="tracker-container">
+                <table class="tracker-table" id="trackerTable">
+                    <thead>
+                        <tr>
+                            <th>Surfer</th>
+                            <th>Heat 1</th>
+                            <th>Heat 2</th>
+                            <th>Heat 3</th>
+                            <th>Heat 4</th>
+                            <th>Heat 5</th>
+                            <th>Heat 6</th>
+                            <th>Goal</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="trackerBody">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
         <!-- Notes Modal -->
         <div id="notesModal" class="notes-modal" onclick="closeNotesModal(event)">
             <div class="notes-modal-content" onclick="event.stopPropagation()">
@@ -852,6 +1057,37 @@
             });
             
             updateCollapsedView();
+        }
+        
+        function updateSurferData() {
+            const surferData = {
+                red: {
+                    name: document.getElementById('red_name').value,
+                    goal: parseFloat(document.getElementById('red_goal').value) || 0
+                },
+                yellow: {
+                    name: document.getElementById('yellow_name').value,
+                    goal: parseFloat(document.getElementById('yellow_goal').value) || 0
+                },
+                black: {
+                    name: document.getElementById('black_name').value,
+                    goal: parseFloat(document.getElementById('black_goal').value) || 0
+                },
+                white: {
+                    name: document.getElementById('white_name').value,
+                    goal: parseFloat(document.getElementById('white_goal').value) || 0
+                },
+                blue: {
+                    name: document.getElementById('blue_name').value,
+                    goal: parseFloat(document.getElementById('blue_goal').value) || 0
+                }
+            };
+            
+            fetch('/update_surfers', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(surferData)
+            });
         }
         
         function updateCollapsedView() {
@@ -1102,6 +1338,7 @@
                 .then(response => response.json())
                 .then(data => {
                     displayResults(data.results);
+                    updatePerformanceTracker();
                     document.getElementById('closeBtn').style.display = 'none';
                     document.getElementById('reopenBtn').style.display = 'inline-block';
                     
@@ -1119,6 +1356,57 @@
                     document.getElementById('results').classList.remove('show');
                     document.getElementById('closeBtn').style.display = 'inline-block';
                     document.getElementById('reopenBtn').style.display = 'none';
+                });
+        }
+        
+        function updatePerformanceTracker() {
+            fetch('/get_session_tracker')
+                .then(response => response.json())
+                .then(data => {
+                    const trackerBody = document.getElementById('trackerBody');
+                    const tracker = data.tracker;
+                    
+                    if (Object.keys(tracker).length === 0) {
+                        return; // No data yet
+                    }
+                    
+                    let html = '';
+                    
+                    for (const [name, info] of Object.entries(tracker)) {
+                        const heats = info.heats || [];
+                        const goal = info.goal || 0;
+                        const bestScore = Math.max(...heats.filter(h => h !== null));
+                        
+                        let statusBadge = '';
+                        if (bestScore >= goal && goal > 0) {
+                            if (bestScore > goal) {
+                                statusBadge = '<span class="status-badge status-above">🔥 Above Goal</span>';
+                            } else {
+                                statusBadge = '<span class="status-badge status-hit">✅ Goal Hit!</span>';
+                            }
+                        } else if (goal > 0) {
+                            statusBadge = '<span class="status-badge status-below">⏳ In Progress</span>';
+                        }
+                        
+                        html += '<tr>';
+                        html += `<td>${name}</td>`;
+                        
+                        // Show up to 6 heats
+                        for (let i = 0; i < 6; i++) {
+                            if (i < heats.length && heats[i] !== null) {
+                                html += `<td class="tracker-score">${heats[i].toFixed(2)}</td>`;
+                            } else {
+                                html += '<td style="color: #475569;">-</td>';
+                            }
+                        }
+                        
+                        html += `<td class="tracker-goal">${goal > 0 ? goal.toFixed(1) : '-'}</td>`;
+                        html += `<td>${statusBadge}</td>`;
+                        html += '</tr>';
+                    }
+                    
+                    trackerBody.innerHTML = html;
+                    document.getElementById('performanceTracker').style.display = 'block';
                 });
         }
         
