@@ -23,14 +23,17 @@ current_heat = {
         'notes': ''
     },
     'surfers': [
-        {'color': 'Red', 'waves': [None] * 12, 'interference': 0},
-        {'color': 'Yellow', 'waves': [None] * 12, 'interference': 0},
-        {'color': 'Black', 'waves': [None] * 12, 'interference': 0},
-        {'color': 'White', 'waves': [None] * 12, 'interference': 0},
-        {'color': 'Blue', 'waves': [None] * 12, 'interference': 0}
+        {'color': 'Red', 'name': '', 'goal': 0, 'waves': [None] * 12, 'interference': 0},
+        {'color': 'Yellow', 'name': '', 'goal': 0, 'waves': [None] * 12, 'interference': 0},
+        {'color': 'Black', 'name': '', 'goal': 0, 'waves': [None] * 12, 'interference': 0},
+        {'color': 'White', 'name': '', 'goal': 0, 'waves': [None] * 12, 'interference': 0},
+        {'color': 'Blue', 'name': '', 'goal': 0, 'waves': [None] * 12, 'interference': 0}
     ],
     'priority_order': []  # Empty = no priority established yet
 }
+
+# Session tracker for coaching (persists across heats)
+session_tracker = {}  # {name: [heat1_score, heat2_score, ...], goal: X}
 
 def calculate_rankings():
     """Calculate live rankings for all surfers with proper tiebreaker logic"""
@@ -90,6 +93,18 @@ def index():
 def update_metadata():
     data = request.json
     current_heat['metadata'].update(data)
+    return jsonify({'success': True})
+
+@app.route('/update_surfers', methods=['POST'])
+def update_surfers():
+    data = request.json
+    color_map = {'red': 0, 'yellow': 1, 'black': 2, 'white': 3, 'blue': 4}
+    
+    for color, idx in color_map.items():
+        if color in data:
+            current_heat['surfers'][idx]['name'] = data[color].get('name', '')
+            current_heat['surfers'][idx]['goal'] = data[color].get('goal', 0)
+    
     return jsonify({'success': True})
 
 @app.route('/start_timer', methods=['POST'])
@@ -207,7 +222,30 @@ def get_priority_order():
 def close_heat():
     current_heat['metadata']['is_closed'] = True
     results = calculate_rankings()
+    
+    # Add scores to session tracker
+    for surfer in current_heat['surfers']:
+        name = surfer.get('name', '').strip()
+        goal = surfer.get('goal', 0)
+        
+        if name:  # Only track if name is provided
+            if name not in session_tracker:
+                session_tracker[name] = {
+                    'heats': [],
+                    'goal': goal
+                }
+            
+            # Find this surfer's score in results
+            for result in results:
+                if result['color'] == surfer['color']:
+                    session_tracker[name]['heats'].append(result['total'])
+                    break
+    
     return jsonify({'results': results})
+
+@app.route('/get_session_tracker', methods=['GET'])
+def get_session_tracker():
+    return jsonify({'tracker': session_tracker})
 
 @app.route('/reopen_heat', methods=['POST'])
 def reopen_heat():
@@ -280,6 +318,65 @@ def export_csv():
     category_clean = current_heat['metadata']['category'].replace(' ', '') if current_heat['metadata']['category'] else 'Category'
     heat_clean = current_heat['metadata']['heat_number'].replace(' ', '') if current_heat['metadata']['heat_number'] else 'Heat'
     filename = f"{category_clean}_H{heat_clean}.csv"
+    
+    return send_file(
+        io.BytesIO(output.getvalue().encode('utf-8')),
+        mimetype='text/csv',
+        as_attachment=True,
+        download_name=filename
+    )
+
+@app.route('/export_session_csv', methods=['GET'])
+def export_session_csv():
+    # Create CSV in memory
+    output = io.StringIO()
+    writer = csv.writer(output)
+    
+    # Header
+    writer.writerow(['SESSION PERFORMANCE TRACKER'])
+    writer.writerow(['Generated:', datetime.now().strftime('%Y-%m-%d %H:%M:%S')])
+    writer.writerow([])
+    
+    # Column headers
+    writer.writerow(['Surfer Name', 'Heat 1', 'Heat 2', 'Heat 3', 'Heat 4', 'Heat 5', 'Heat 6', 'Goal Score', 'Best Score', 'Status'])
+    
+    # Data rows
+    for name, info in session_tracker.items():
+        heats = info.get('heats', [])
+        goal = info.get('goal', 0)
+        
+        # Pad heats to 6 columns
+        heat_scores = []
+        for i in range(6):
+            if i < len(heats) and heats[i] is not None:
+                heat_scores.append(f"{heats[i]:.2f}")
+            else:
+                heat_scores.append('-')
+        
+        # Calculate best score and status
+        valid_heats = [h for h in heats if h is not None]
+        best_score = max(valid_heats) if valid_heats else 0
+        
+        if best_score >= goal and goal > 0:
+            if best_score > goal:
+                status = 'Above Goal'
+            else:
+                status = 'Goal Hit!'
+        elif goal > 0:
+            status = 'In Progress'
+        else:
+            status = '-'
+        
+        # Write row
+        row = [name] + heat_scores + [f"{goal:.1f}" if goal > 0 else '-', f"{best_score:.2f}" if best_score > 0 else '-', status]
+        writer.writerow(row)
+    
+    # Prepare file for download
+    output.seek(0)
+    
+    # Create filename with timestamp
+    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+    filename = f"KSS_Session_{timestamp}.csv"
     
     return send_file(
         io.BytesIO(output.getvalue().encode('utf-8')),
