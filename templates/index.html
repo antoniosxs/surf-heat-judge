@@ -3,12 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="theme-color" content="#10b981">
+    <meta name="theme-color" content="#1e3a8a">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Surf Judge">
+    <meta name="apple-mobile-web-app-title" content="KSS">
     <link rel="manifest" href="/static/manifest.json">
-    <title>Surf Heat Judge Pro</title>
+    <link rel="icon" type="image/png" sizes="192x192" href="/static/kss.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="/static/kss_512.png">
+    <link rel="apple-touch-icon" href="/static/kss_512.png">
+    <title>KSS Judging System</title>
     <style>
         * {
             margin: 0;
@@ -20,7 +23,7 @@
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
             background: #0f172a;
             min-height: 100vh;
-            padding: 20px;
+            padding: 12px;
             color: #e2e8f0;
         }
         
@@ -32,7 +35,7 @@
         h1 {
             text-align: center;
             color: #f8fafc;
-            margin-bottom: 24px;
+            margin-bottom: 16px;
             font-size: 2em;
             font-weight: 700;
             letter-spacing: -0.02em;
@@ -40,17 +43,37 @@
         
         .header-section {
             background: #1e293b;
-            border-radius: 12px;
-            padding: 24px;
-            margin-bottom: 20px;
+            border-radius: 10px;
+            padding: 16px;
+            margin-bottom: 12px;
             border: 1px solid #334155;
         }
         
         .metadata-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 16px;
-            margin-bottom: 20px;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+        
+        .metadata-collapsed {
+            padding: 10px 16px;
+            background: #1e293b;
+            border-radius: 8px;
+            border: 1px solid #334155;
+            font-size: 13px;
+            color: #cbd5e1;
+            margin-bottom: 12px;
+            display: none;
+            font-weight: 500;
+        }
+        
+        .metadata-collapsed.active {
+            display: block;
+        }
+        
+        .metadata-form.hidden {
+            display: none;
         }
         
         .metadata-field {
@@ -95,21 +118,23 @@
             grid-column: 1 / -1;
         }
         
-        .timer-section {
-            display: flex;
+        .timer-controls-row {
+            display: grid;
+            grid-template-columns: auto 1fr auto;
+            gap: 16px;
             align-items: center;
-            justify-content: center;
-            gap: 24px;
-            padding: 20px;
+            padding: 16px;
             background: linear-gradient(135deg, #10b981 0%, #059669 100%);
             border-radius: 10px;
+            margin-bottom: 20px;
         }
         
         .timer-display {
-            font-size: 56px;
+            font-size: 48px;
             font-weight: 700;
             font-family: 'SF Mono', 'Monaco', 'Courier New', monospace;
             letter-spacing: -0.02em;
+            text-align: center;
         }
         
         .timer-display.warning {
@@ -119,6 +144,94 @@
         .timer-display.critical {
             color: #ef4444;
             animation: pulse 1s infinite;
+        }
+        
+        .inline-controls {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+        }
+        
+        .notes-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .notes-modal.active {
+            display: flex;
+        }
+        
+        .notes-modal-content {
+            background: #1e293b;
+            border-radius: 12px;
+            padding: 24px;
+            width: 90%;
+            max-width: 600px;
+            border: 1px solid #334155;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+        }
+        
+        .notes-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+        
+        .notes-modal-header h3 {
+            margin: 0;
+            color: #f1f5f9;
+            font-size: 18px;
+        }
+        
+        .notes-close-btn {
+            background: #64748b;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+        }
+        
+        .notes-close-btn:hover {
+            background: #475569;
+        }
+        
+        .notes-modal textarea {
+            width: 100%;
+            min-height: 200px;
+            padding: 12px;
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            color: #e2e8f0;
+            font-size: 14px;
+            font-family: inherit;
+            resize: vertical;
+        }
+        
+        .notes-modal textarea:focus {
+            outline: none;
+            border-color: #3b82f6;
+        }
+        
+        .btn-notes {
+            background: #8b5cf6;
+            color: white;
+        }
+        
+        .btn-notes:hover {
+            background: #7c3aed;
         }
         
         @keyframes pulse {
@@ -171,17 +284,17 @@
         
         .priority-bar-container {
             background: #1e293b;
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 20px;
+            border-radius: 10px;
+            padding: 14px 16px;
+            margin-bottom: 12px;
             border: 1px solid #334155;
         }
         
         .priority-bar-container h3 {
             color: #cbd5e1;
-            margin-bottom: 16px;
+            margin-bottom: 12px;
             text-align: center;
-            font-size: 14px;
+            font-size: 13px;
             font-weight: 600;
             text-transform: uppercase;
             letter-spacing: 0.05em;
@@ -256,13 +369,13 @@
         .main-grid {
             display: grid;
             grid-template-columns: 1fr 320px;
-            gap: 20px;
+            gap: 12px;
         }
         
         .grid-container {
             background: #1e293b;
-            border-radius: 12px;
-            padding: 20px;
+            border-radius: 10px;
+            padding: 14px;
             border: 1px solid #334155;
             overflow-x: auto;
         }
@@ -270,13 +383,13 @@
         table {
             width: 100%;
             border-collapse: separate;
-            border-spacing: 6px;
+            border-spacing: 4px;
         }
         
         th {
             background: #334155;
             color: #cbd5e1;
-            padding: 10px;
+            padding: 8px;
             font-weight: 600;
             border-radius: 6px;
             text-align: center;
@@ -392,10 +505,10 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 14px;
-            margin-bottom: 10px;
+            padding: 10px 12px;
+            margin-bottom: 8px;
             border-radius: 8px;
-            font-size: 16px;
+            font-size: 15px;
             font-weight: 600;
             transition: all 0.2s ease;
             border: 1px solid transparent;
@@ -543,18 +656,34 @@
 </head>
 <body>
     <div class="container">
-        <h1>🏄 Surf Heat Judge Pro</h1>
+        <!-- KSS Header -->
+        <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 16px;">
+            <img src="/static/kss.png" alt="KSS" style="width: 48px; height: 48px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
+            <div>
+                <h1 style="margin: 0; font-size: 28px; font-weight: 700; color: #f1f5f9; line-height: 1;">KSS</h1>
+                <p style="margin: 2px 0 0 0; font-size: 13px; color: #94a3b8; font-weight: 500;">Karibe Surf Score</p>
+            </div>
+        </div>
         
         <!-- Header Section -->
         <div class="header-section">
-            <div class="metadata-grid">
-                <div class="metadata-field">
-                    <label>Heat Number</label>
-                    <input type="text" id="heat_number" value="{{ metadata.heat_number }}" onchange="updateMetadata()">
-                </div>
-                <div class="metadata-field">
-                    <label>Round</label>
-                    <input type="text" id="round" value="{{ metadata.round }}" onchange="updateMetadata()">
+            <!-- Collapsed metadata view (shown after heat starts) -->
+            <div id="metadataCollapsed" class="metadata-collapsed"></div>
+            
+            <!-- Full metadata form (shown before heat starts) -->
+            <div id="metadataForm" class="metadata-form">
+                <div class="metadata-grid">
+                    <div class="metadata-field">
+                        <label>Heat Number</label>
+                        <input type="text" id="heat_number" value="{{ metadata.heat_number }}" onchange="updateMetadata()">
+                    </div>
+                    <div class="metadata-field">
+                        <label>Category</label>
+                        <input type="text" id="category" value="{{ metadata.category }}" onchange="updateMetadata()" placeholder="Open Men, U18, etc.">
+                    </div>
+                    <div class="metadata-field">
+                        <label>Round</label>
+                        <input type="text" id="round" value="{{ metadata.round }}" onchange="updateMetadata()">
                 </div>
                 <div class="metadata-field">
                     <label>Location</label>
@@ -564,23 +693,23 @@
                     <label>Duration (min)</label>
                     <input type="number" id="duration" value="{{ metadata.duration }}" min="1" max="60" onchange="updateMetadata()">
                 </div>
-                <div class="metadata-field notes-field">
-                    <label>Notes</label>
-                    <textarea id="notes" onchange="updateMetadata()" placeholder="Add notes about the heat...">{{ metadata.notes }}</textarea>
+                <div class="metadata-field notes-field" style="display: none;">
+                    <textarea id="notes" onchange="updateMetadata()">{{ metadata.notes }}</textarea>
                 </div>
             </div>
-            
-            <div class="timer-section">
-                <button class="btn btn-start" onclick="startTimer()" id="startBtn">▶️ Start Timer</button>
-                <div class="timer-display" id="timerDisplay">{{ metadata.duration }}:00</div>
             </div>
-        </div>
-        
-        <!-- Controls -->
-        <div class="controls">
-            <button class="btn btn-close" onclick="closeHeat()" id="closeBtn">🏁 Close Heat</button>
-            <button class="btn btn-reopen" onclick="reopenHeat()" id="reopenBtn" style="display:none;">🔓 Reopen</button>
-            <button class="btn btn-reset" onclick="resetHeat()">🔄 Reset</button>
+            
+            <!-- Timer and Controls Row -->
+            <div class="timer-controls-row">
+                <button class="btn btn-start" onclick="startTimer()" id="startBtn">▶️ Start</button>
+                <div class="timer-display" id="timerDisplay">{{ metadata.duration }}:00</div>
+                <div class="inline-controls">
+                    <button class="btn btn-notes" onclick="openNotesModal()">📝 Notes</button>
+                    <button class="btn btn-close" onclick="closeHeat()" id="closeBtn">🏁 Close</button>
+                    <button class="btn btn-reopen" onclick="reopenHeat()" id="reopenBtn" style="display:none;">🔓 Reopen</button>
+                    <button class="btn btn-reset" onclick="resetHeat()">🔄 Reset</button>
+                </div>
+            </div>
         </div>
         
         <!-- Priority Bar -->
@@ -657,16 +786,45 @@
             </div>
             <div id="results-content"></div>
         </div>
+        
+        <!-- Notes Modal -->
+        <div id="notesModal" class="notes-modal" onclick="closeNotesModal(event)">
+            <div class="notes-modal-content" onclick="event.stopPropagation()">
+                <div class="notes-modal-header">
+                    <h3>📝 Heat Notes</h3>
+                    <button class="notes-close-btn" onclick="closeNotesModal()">✕ Close</button>
+                </div>
+                <textarea id="notesTextarea" placeholder="Add observations, incidents, key moments..."></textarea>
+            </div>
+        </div>
     </div>
     
     <script>
         let timerInterval = null;
         let startTime = null;
         let duration = {{ metadata.duration }};
+        let heatStarted = false;
+        
+        function openNotesModal() {
+            // Sync textarea with hidden notes field
+            document.getElementById('notesTextarea').value = document.getElementById('notes').value;
+            document.getElementById('notesModal').classList.add('active');
+        }
+        
+        function closeNotesModal(event) {
+            // Only close if clicking on modal background or close button
+            if (!event || event.target === document.getElementById('notesModal')) {
+                // Save notes back to hidden field
+                document.getElementById('notes').value = document.getElementById('notesTextarea').value;
+                updateMetadata();
+                document.getElementById('notesModal').classList.remove('active');
+            }
+        }
         
         function updateMetadata() {
             const metadata = {
                 heat_number: document.getElementById('heat_number').value,
+                category: document.getElementById('category').value,
                 round: document.getElementById('round').value,
                 location: document.getElementById('location').value,
                 duration: parseInt(document.getElementById('duration').value),
@@ -681,10 +839,38 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(metadata)
             });
+            
+            updateCollapsedView();
+        }
+        
+        function updateCollapsedView() {
+            const heatNum = document.getElementById('heat_number').value || 'N/A';
+            const category = document.getElementById('category').value || 'N/A';
+            const round = document.getElementById('round').value || 'N/A';
+            const location = document.getElementById('location').value || 'N/A';
+            const dur = document.getElementById('duration').value || '20';
+            
+            const collapsedText = `Heat ${heatNum} • ${category} • ${round} • ${location} • ${dur} min`;
+            document.getElementById('metadataCollapsed').textContent = collapsedText;
+        }
+        
+        function collapseMetadata() {
+            document.getElementById('metadataForm').classList.add('hidden');
+            document.getElementById('metadataCollapsed').classList.add('active');
+            heatStarted = true;
+        }
+        
+        function expandMetadata() {
+            document.getElementById('metadataForm').classList.remove('hidden');
+            document.getElementById('metadataCollapsed').classList.remove('active');
+            heatStarted = false;
         }
         
         function startTimer() {
             if (timerInterval) return;
+            
+            // Collapse metadata when starting timer
+            collapseMetadata();
             
             fetch('/start_timer', { method: 'POST' })
                 .then(response => response.json())
@@ -992,6 +1178,9 @@
                         
                         document.getElementById('liveRankings').innerHTML = '';
                         document.getElementById('notes').value = '';
+                        
+                        // Expand metadata form again for next heat
+                        expandMetadata();
                         
                         fetch('/get_priority_order')
                             .then(response => response.json())
