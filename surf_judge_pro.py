@@ -14,6 +14,7 @@ app = Flask(__name__, static_folder='static', static_url_path='/static')
 current_heat = {
     'metadata': {
         'heat_number': '',
+        'category': '',
         'round': '',
         'location': '',
         'duration': 20,  # minutes
@@ -234,6 +235,7 @@ def export_csv():
     
     # Metadata header
     writer.writerow(['Heat Number', current_heat['metadata']['heat_number']])
+    writer.writerow(['Category', current_heat['metadata']['category']])
     writer.writerow(['Round', current_heat['metadata']['round']])
     writer.writerow(['Location', current_heat['metadata']['location']])
     writer.writerow(['Duration', f"{current_heat['metadata']['duration']} minutes"])
@@ -273,11 +275,17 @@ def export_csv():
     
     # Prepare file for download
     output.seek(0)
+    
+    # Create filename: category_heatnumber (e.g., "OpenMen_H1")
+    category_clean = current_heat['metadata']['category'].replace(' ', '') if current_heat['metadata']['category'] else 'Category'
+    heat_clean = current_heat['metadata']['heat_number'].replace(' ', '') if current_heat['metadata']['heat_number'] else 'Heat'
+    filename = f"{category_clean}_H{heat_clean}.csv"
+    
     return send_file(
         io.BytesIO(output.getvalue().encode('utf-8')),
         mimetype='text/csv',
         as_attachment=True,
-        download_name=f"heat_{current_heat['metadata']['heat_number']}_results.csv"
+        download_name=filename
     )
 
 @app.route('/export_pdf', methods=['GET'])
@@ -292,14 +300,26 @@ def export_pdf():
     styles = getSampleStyleSheet()
     
     # Title
-    title = Paragraph(f"<b>Heat Results - {current_heat['metadata']['round']}</b>", styles['Title'])
+    title = Paragraph(f"<b>KSS - Heat Results</b>", styles['Title'])
     elements.append(title)
+    elements.append(Spacer(1, 6))
+    
+    subtitle = Paragraph(f"<i>Karibe Surf Score Judging System</i>", styles['Normal'])
+    elements.append(subtitle)
+    elements.append(Spacer(1, 12))
+    
+    round_title = Paragraph(f"<b>{current_heat['metadata']['round']}</b>", styles['Heading2'])
+    elements.append(round_title)
     elements.append(Spacer(1, 12))
     
     # Metadata
-    meta_text = f"Heat: {current_heat['metadata']['heat_number']} | Location: {current_heat['metadata']['location']} | Duration: {current_heat['metadata']['duration']} min"
+    meta_text = f"Heat: {current_heat['metadata']['heat_number']} | Category: {current_heat['metadata']['category']} | Round: {current_heat['metadata']['round']}"
     meta = Paragraph(meta_text, styles['Normal'])
     elements.append(meta)
+    
+    location_text = f"Location: {current_heat['metadata']['location']} | Duration: {current_heat['metadata']['duration']} min"
+    location = Paragraph(location_text, styles['Normal'])
+    elements.append(location)
     elements.append(Spacer(1, 12))
     
     # Notes if present
@@ -373,11 +393,17 @@ def export_pdf():
     doc.build(elements)
     
     buffer.seek(0)
+    
+    # Create filename: category_heatnumber (e.g., "OpenMen_H1")
+    category_clean = current_heat['metadata']['category'].replace(' ', '') if current_heat['metadata']['category'] else 'Category'
+    heat_clean = current_heat['metadata']['heat_number'].replace(' ', '') if current_heat['metadata']['heat_number'] else 'Heat'
+    filename = f"{category_clean}_H{heat_clean}.pdf"
+    
     return send_file(
         buffer,
         mimetype='application/pdf',
         as_attachment=True,
-        download_name=f"heat_{current_heat['metadata']['heat_number']}_results.pdf"
+        download_name=filename
     )
 
 if __name__ == '__main__':
