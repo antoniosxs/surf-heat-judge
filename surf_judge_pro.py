@@ -32,7 +32,7 @@ current_heat = {
 }
 
 def calculate_rankings():
-    """Calculate live rankings for all surfers"""
+    """Calculate live rankings for all surfers with proper tiebreaker logic"""
     results = []
     
     for idx, surfer in enumerate(current_heat['surfers']):
@@ -41,27 +41,36 @@ def calculate_rankings():
         top_two = valid_waves[:2] if len(valid_waves) >= 2 else valid_waves
         
         # Apply interference penalty
-        # interference: 0 = none, 1 = half of second wave, 2 = half of both waves
+        # interference: 0 = none, 1 = half of second wave, 2 = half of first wave
         total = sum(top_two)
         if surfer['interference'] == 1 and len(top_two) >= 2:
-            # 1st interference: Deduct half of second best wave
+            # INT-2: Deduct half of second best wave
             total -= (top_two[1] / 2)
         elif surfer['interference'] == 2 and len(top_two) >= 1:
-            # 2nd interference: Deduct half of BOTH waves
-            total -= (sum(top_two) / 2)
+            # INT-1: Deduct half of best wave
+            total -= (top_two[0] / 2)
         
         results.append({
             'idx': idx,
             'color': surfer['color'],
             'top_waves': top_two,
-            'top_wave_indices': [],  # Will be calculated in frontend
+            'all_waves_sorted': valid_waves,  # All waves sorted for tiebreaker
             'total': total,
             'all_waves': [w for w in surfer['waves'] if w is not None],
             'interference': surfer['interference']
         })
     
-    # Sort by total descending
-    results.sort(key=lambda x: x['total'], reverse=True)
+    # Sort with proper tiebreaker logic:
+    # 1. By total (descending)
+    # 2. If tied on total, by highest single wave (descending)
+    # 3. If still tied, by 3rd wave, 4th wave, etc.
+    def sort_key(result):
+        # Create tuple: (total, wave1, wave2, wave3, ...)
+        # Pad with 0s if fewer waves to ensure proper comparison
+        waves = result['all_waves_sorted'] + [0] * (12 - len(result['all_waves_sorted']))
+        return (result['total'],) + tuple(waves)
+    
+    results.sort(key=sort_key, reverse=True)
     
     # Add position
     for pos, result in enumerate(results, 1):
@@ -232,8 +241,22 @@ def export_csv():
         writer.writerow(['Notes', current_heat['metadata']['notes']])
     writer.writerow([])  # Empty row
     
-    # Results header
-    writer.writerow(['Position', 'Surfer', 'Wave 1', 'Wave 2', 'Total', 'Interference'])
+    # Full scoring grid
+    writer.writerow(['FULL SCORING GRID'])
+    grid_header = ['Surfer'] + [f'W{i+1}' for i in range(12)]
+    writer.writerow(grid_header)
+    
+    for surfer in current_heat['surfers']:
+        row = [surfer['color']]
+        for wave in surfer['waves']:
+            row.append(f"{wave:.2f}" if wave is not None else '-')
+        writer.writerow(row)
+    
+    writer.writerow([])  # Empty row
+    
+    # Final results
+    writer.writerow(['FINAL RESULTS'])
+    writer.writerow(['Position', 'Surfer', 'Best Wave', '2nd Wave', 'Total', 'Interference'])
     
     # Data
     for result in results:
@@ -288,8 +311,39 @@ def export_pdf():
     else:
         elements.append(Spacer(1, 8))
     
+    # Full scoring grid
+    grid_title = Paragraph("<b>Full Scoring Grid</b>", styles['Heading2'])
+    elements.append(grid_title)
+    elements.append(Spacer(1, 8))
+    
+    grid_data = [['Surfer'] + [f'W{i+1}' for i in range(12)]]
+    for surfer in current_heat['surfers']:
+        row = [surfer['color']]
+        for wave in surfer['waves']:
+            row.append(f"{wave:.1f}" if wave is not None else '-')
+        grid_data.append(row)
+    
+    grid_table = Table(grid_data)
+    grid_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, -1), 8),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 8),
+        ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+        ('GRID', (0, 0), (-1, -1), 1, colors.black)
+    ]))
+    elements.append(grid_table)
+    elements.append(Spacer(1, 20))
+    
+    # Final results section
+    results_title = Paragraph("<b>Final Results</b>", styles['Heading2'])
+    elements.append(results_title)
+    elements.append(Spacer(1, 8))
+    
     # Results table
-    data = [['Position', 'Surfer', 'Wave 1', 'Wave 2', 'Total', 'Interference']]
+    data = [['Position', 'Surfer', 'Best Wave', '2nd Wave', 'Total', 'Interference']]
     
     for result in results:
         waves = result['top_waves'] + [None] * (2 - len(result['top_waves']))
