@@ -1,20 +1,20 @@
 {
-  "name": "Surf Heat Judge Pro",
-  "short_name": "Surf Judge",
-  "description": "Professional surf heat judging application",
+  "name": "KSS Judging System",
+  "short_name": "KSS",
+  "description": "Karibe Surf Score - Professional surf heat judging application",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0f172a",
-  "theme_color": "#10b981",
+  "theme_color": "#1e3a8a",
   "orientation": "any",
   "icons": [
     {
-      "src": "/static/icon-192.png",
+      "src": "/static/kss.png",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "/static/icon-512.png",
+      "src": "/static/kss_512.png",
       "sizes": "512x512",
       "type": "image/png"
     }
