@@ -442,6 +442,14 @@
             font-weight: 500;
         }
         
+        .score-needed {
+            font-size: 11px;
+            color: #10b981;
+            margin-top: 2px;
+            font-weight: 600;
+            font-style: italic;
+        }
+        
         .interference-indicator {
             font-size: 12px;
             padding: 2px 6px;
@@ -681,7 +689,8 @@
             fetch('/start_timer', { method: 'POST' })
                 .then(response => response.json())
                 .then(data => {
-                    startTime = new Date(data.start_time);
+                    // Use timestamp in milliseconds to avoid timezone issues
+                    startTime = Date.now();
                     document.getElementById('startBtn').disabled = true;
                     document.getElementById('startBtn').style.opacity = '0.5';
                     
@@ -690,7 +699,7 @@
         }
         
         function updateTimerDisplay() {
-            const now = new Date();
+            const now = Date.now();
             const elapsed = Math.floor((now - startTime) / 1000);
             const totalSeconds = duration * 60;
             const remaining = Math.max(0, totalSeconds - elapsed);
@@ -830,7 +839,11 @@
             const container = document.getElementById('liveRankings');
             let html = '';
             
-            rankings.forEach(result => {
+            // Get totals for 1st and 2nd place for calculations
+            const firstPlaceTotal = rankings.length > 0 ? rankings[0].total : 0;
+            const secondPlaceTotal = rankings.length > 1 ? rankings[1].total : 0;
+            
+            rankings.forEach((result, index) => {
                 const emoji = result.position === 1 ? '🥇' : 
                              result.position === 2 ? '🥈' : 
                              result.position === 3 ? '🥉' : 
@@ -840,9 +853,35 @@
                 
                 let interferenceStr = '';
                 if (result.interference === 1) {
-                    interferenceStr = '<span class="interference-indicator">INT-1</span>';
-                } else if (result.interference === 2) {
                     interferenceStr = '<span class="interference-indicator">INT-2</span>';
+                } else if (result.interference === 2) {
+                    interferenceStr = '<span class="interference-indicator">INT-1</span>';
+                }
+                
+                // Calculate score needed
+                let scoreNeeded = '';
+                if (result.position === 2) {
+                    // 2nd place needs to beat 1st
+                    const targetTotal = firstPlaceTotal + 0.01;
+                    const bestWave = result.top_waves.length > 0 ? result.top_waves[0] : 0;
+                    const waveNeeded = targetTotal - bestWave;
+                    
+                    if (waveNeeded <= 10.0) {
+                        scoreNeeded = `<div class="score-needed">needs ${waveNeeded.toFixed(2)} for 1st</div>`;
+                    } else {
+                        scoreNeeded = `<div class="score-needed">needs combo - ${targetTotal.toFixed(2)} for 1st</div>`;
+                    }
+                } else if (result.position >= 3) {
+                    // 3rd-5th need to beat 2nd
+                    const targetTotal = secondPlaceTotal + 0.01;
+                    const bestWave = result.top_waves.length > 0 ? result.top_waves[0] : 0;
+                    const waveNeeded = targetTotal - bestWave;
+                    
+                    if (waveNeeded <= 10.0) {
+                        scoreNeeded = `<div class="score-needed">needs ${waveNeeded.toFixed(2)} for 2nd</div>`;
+                    } else {
+                        scoreNeeded = `<div class="score-needed">needs combo - ${targetTotal.toFixed(2)} for 2nd</div>`;
+                    }
                 }
                 
                 html += `
@@ -851,6 +890,7 @@
                             <span class="ranking-position">${emoji}</span>
                             <strong>${result.color}</strong>${interferenceStr}
                             <div class="ranking-waves">${wavesStr || 'No scores'}</div>
+                            ${scoreNeeded}
                         </div>
                         <div style="font-size: 20px;">${result.total.toFixed(2)}</div>
                     </div>
