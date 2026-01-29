@@ -338,7 +338,7 @@ def export_session_csv():
     writer.writerow([])
     
     # Column headers
-    writer.writerow(['Surfer Name', 'Heat 1', 'Heat 2', 'Heat 3', 'Heat 4', 'Heat 5', 'Heat 6', 'Goal Score', 'Best Score', 'Status'])
+    writer.writerow(['Surfer Name', 'Heat 1', 'Heat 2', 'Heat 3', 'Heat 4', 'Heat 5', 'Heat 6', 'Average', 'Goal Score', 'Best Score', 'Status'])
     
     # Data rows
     for name, info in session_tracker.items():
@@ -353,9 +353,10 @@ def export_session_csv():
             else:
                 heat_scores.append('-')
         
-        # Calculate best score and status
+        # Calculate best score, average, and status
         valid_heats = [h for h in heats if h is not None]
         best_score = max(valid_heats) if valid_heats else 0
+        avg_score = sum(valid_heats) / len(valid_heats) if valid_heats else 0
         
         if best_score >= goal and goal > 0:
             if best_score > goal:
@@ -368,7 +369,7 @@ def export_session_csv():
             status = '-'
         
         # Write row
-        row = [name] + heat_scores + [f"{goal:.1f}" if goal > 0 else '-', f"{best_score:.2f}" if best_score > 0 else '-', status]
+        row = [name] + heat_scores + [f"{avg_score:.2f}" if avg_score > 0 else '-', f"{goal:.1f}" if goal > 0 else '-', f"{best_score:.2f}" if best_score > 0 else '-', status]
         writer.writerow(row)
     
     # Prepare file for download
