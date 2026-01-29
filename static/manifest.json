@@ -4,19 +4,24 @@
   "description": "Karibe Surf Score - Professional surf heat judging application",
   "start_url": "/",
   "display": "standalone",
+  "orientation": "any",
   "background_color": "#0f172a",
   "theme_color": "#1e3a8a",
-  "orientation": "any",
+  "prefer_related_applications": false,
   "icons": [
     {
       "src": "/static/kss.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     },
     {
       "src": "/static/kss_512.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     }
-  ]
+  ],
+  "categories": ["sports", "utilities"],
+  "screenshots": []
 }
