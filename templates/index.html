@@ -444,7 +444,7 @@
         
         table {
             width: 100%;
-            min-width: 900px;
+            min-width: 1400px;
             border-collapse: separate;
             border-spacing: 4px;
         }
@@ -514,6 +514,31 @@
             box-shadow: 0 0 12px rgba(239, 68, 68, 0.6);
         }
         
+        .interference-btn.level-3 {
+            background: #dc2626;
+            color: white;
+            box-shadow: 0 0 12px rgba(220, 38, 38, 0.6);
+        }
+        
+        .interference-btn.level-4 {
+            background: #991b1b;
+            color: white;
+            box-shadow: 0 0 12px rgba(153, 27, 27, 0.6);
+        }
+        
+        .interference-btn.level-5 {
+            background: #7f1d1d;
+            color: white;
+            box-shadow: 0 0 12px rgba(127, 29, 29, 0.6);
+        }
+        
+        .interference-btn.level-6 {
+            background: #000000;
+            color: white;
+            box-shadow: 0 0 16px rgba(255, 0, 0, 0.8);
+            border: 2px solid #ef4444;
+        }
+        
         .color-red { background: #991b1b; color: #fecaca; border: 1px solid #7f1d1d; }
         .color-yellow { background: #854d0e; color: #fef08a; border: 1px solid #713f12; }
         .color-black { background: #0f172a; color: #e2e8f0; border: 1px solid #1e293b; }
@@ -545,6 +570,28 @@
             border-color: #d97706;
             color: #78350f;
             font-weight: 700;
+        }
+        
+        input[type="number"].interference-marked {
+            border: 3px solid #ef4444;
+            background: rgba(239, 68, 68, 0.15);
+            box-shadow: 0 0 8px rgba(239, 68, 68, 0.5);
+        }
+        
+        td {
+            position: relative;
+        }
+        
+        .interference-triangle {
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            color: #ef4444;
+            font-size: 18px;
+            font-weight: bold;
+            pointer-events: none;
+            text-shadow: 0 0 4px rgba(0, 0, 0, 0.8);
+            z-index: 10;
         }
         
         .live-rankings {
@@ -931,6 +978,14 @@
                             <th>W10</th>
                             <th>W11</th>
                             <th>W12</th>
+                            <th>W13</th>
+                            <th>W14</th>
+                            <th>W15</th>
+                            <th>W16</th>
+                            <th>W17</th>
+                            <th>W18</th>
+                            <th>W19</th>
+                            <th>W20</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -938,12 +993,13 @@
                         <tr>
                             <td class="color-cell color-{{ surfer.color|lower }}" onclick="sendToBackOfQueue({{ idx }})" title="Click to send to back of priority queue">
                                 {{ surfer.color }}
-                                <button class="interference-btn {% if surfer.interference == 1 %}level-1{% elif surfer.interference == 2 %}level-2{% endif %}" 
+                                <button class="interference-btn {% if surfer.interference == 1 %}level-1{% elif surfer.interference == 2 %}level-2{% elif surfer.interference == 3 %}level-3{% elif surfer.interference == 4 %}level-4{% elif surfer.interference == 5 %}level-5{% elif surfer.interference == 6 %}level-6{% endif %}" 
                                         onclick="event.stopPropagation(); toggleInterference({{ idx }})" 
                                         id="interference-{{ idx }}"
-                                        title="Click: None → INT-1 (½ 2nd wave) → INT-2 (½ both waves) → None">INT</button>
+                                        title="ISA Interference Penalties:
+None → INT-1 (½ 2nd, Non-Priority) → INT-2 (0 2nd, Priority) → INT-3 (0 1st, Last 5min) → 2xINT (½ 1st + 0 2nd) → 2xINT (0 both) → DQ → None">INT</button>
                             </td>
-                            {% for wave_idx in range(12) %}
+                            {% for wave_idx in range(20) %}
                             <td>
                                 <input 
                                     type="number" 
@@ -955,7 +1011,11 @@
                                     id="score-{{ idx }}-{{ wave_idx }}"
                                     value="{{ surfer.waves[wave_idx] if surfer.waves[wave_idx] is not none else '' }}"
                                     onchange="updateScore(this)"
+                                    ondblclick="markInterferenceWave({{ idx }}, {{ wave_idx }})"
+                                    title="Double-click to mark interference (ISA triangle)"
+                                    class="{{ 'interference-marked' if wave_idx in surfer.interference_waves else '' }}"
                                 >
+                                <span class="interference-triangle" id="triangle-{{ idx }}-{{ wave_idx }}" style="display: {{ 'block' if wave_idx in surfer.interference_waves else 'none' }};">▲</span>
                             </td>
                             {% endfor %}
                         </tr>
@@ -1033,6 +1093,26 @@
         let startTime = null;
         let duration = {{ metadata.duration }};
         let heatStarted = false;
+        
+        const INTERFERENCE_LABELS = {
+            0: 'None',
+            1: 'INT-1',
+            2: 'INT-2',
+            3: 'INT-3',
+            4: '2xINT',
+            5: '2xINT',
+            6: 'DQ'
+        };
+        
+        const INTERFERENCE_DESCRIPTIONS = {
+            0: '',
+            1: '½ 2nd wave (Non-Priority)',
+            2: '0 2nd wave (Priority)',
+            3: '0 1st wave (Last 5min)',
+            4: '½ 1st + 0 2nd waves',
+            5: '0 both waves',
+            6: 'DISQUALIFIED'
+        };
         
         function openNotesModal() {
             // Sync textarea with hidden notes field
@@ -1196,6 +1276,30 @@
             });
         }
         
+        function markInterferenceWave(surferIdx, waveIdx) {
+            fetch('/mark_interference_wave', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    surfer_idx: parseInt(surferIdx),
+                    wave_idx: parseInt(waveIdx)
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                const input = document.getElementById(`score-${surferIdx}-${waveIdx}`);
+                const triangle = document.getElementById(`triangle-${surferIdx}-${waveIdx}`);
+                
+                if (data.interference_waves.includes(waveIdx)) {
+                    input.classList.add('interference-marked');
+                    triangle.style.display = 'block';
+                } else {
+                    input.classList.remove('interference-marked');
+                    triangle.style.display = 'none';
+                }
+            });
+        }
+        
         function sendToBackOfQueue(surferIdx) {
             fetch('/toggle_priority', {
                 method: 'POST',
@@ -1243,10 +1347,8 @@
                 const btn = document.getElementById(`interference-${surferIdx}`);
                 btn.className = 'interference-btn';
                 
-                if (data.interference === 1) {
-                    btn.classList.add('level-1');
-                } else if (data.interference === 2) {
-                    btn.classList.add('level-2');
+                if (data.interference >= 1 && data.interference <= 6) {
+                    btn.classList.add(`level-${data.interference}`);
                 }
                 
                 updateLiveRankings(data.rankings);
@@ -1264,7 +1366,7 @@
                 const topScores = result.top_waves;
                 
                 const waves = [];
-                for (let i = 0; i < 12; i++) {
+                for (let i = 0; i < 20; i++) {
                     const input = document.getElementById(`score-${surferIdx}-${i}`);
                     if (input.value) {
                         waves.push({ idx: i, score: parseFloat(input.value) });
@@ -1298,10 +1400,9 @@
                 const wavesStr = result.top_waves.map(w => w.toFixed(1)).join(' + ');
                 
                 let interferenceStr = '';
-                if (result.interference === 1) {
-                    interferenceStr = '<span class="interference-indicator">INT-2</span>';
-                } else if (result.interference === 2) {
-                    interferenceStr = '<span class="interference-indicator">INT-1</span>';
+                if (result.interference >= 1 && result.interference <= 6) {
+                    const desc = INTERFERENCE_DESCRIPTIONS[result.interference];
+                    interferenceStr = `<span class="interference-indicator">${INTERFERENCE_LABELS[result.interference]}: ${desc}</span>`;
                 }
                 
                 // Calculate score needed
@@ -1440,10 +1541,9 @@
                 const wavesStr = result.top_waves.map(w => w.toFixed(1)).join(' + ');
                 
                 let interferenceStr = '';
-                if (result.interference === 1) {
-                    interferenceStr = ' <span class="interference-indicator">INT-1 (-½ 2nd wave)</span>';
-                } else if (result.interference === 2) {
-                    interferenceStr = ' <span class="interference-indicator">INT-2 (-½ both waves)</span>';
+                if (result.interference >= 1 && result.interference <= 6) {
+                    const desc = INTERFERENCE_DESCRIPTIONS[result.interference];
+                    interferenceStr = ` <span class="interference-indicator">${INTERFERENCE_LABELS[result.interference]}: ${desc}</span>`;
                 }
                 
                 html += `
@@ -1471,6 +1571,12 @@
                         document.querySelectorAll('input[type="number"]').forEach(input => {
                             input.value = '';
                             input.classList.remove('best-score');
+                            input.classList.remove('interference-marked');
+                        });
+                        
+                        // Limpiar todos los triángulos de interferencia
+                        document.querySelectorAll('.interference-triangle').forEach(triangle => {
+                            triangle.style.display = 'none';
                         });
                         
                         document.querySelectorAll('.interference-btn').forEach(el => {
