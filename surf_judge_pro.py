@@ -23,11 +23,11 @@ current_heat = {
         'notes': ''
     },
     'surfers': [
-        {'color': 'Red', 'name': '', 'goal': 0, 'waves': [None] * 12, 'interference': 0},
-        {'color': 'Yellow', 'name': '', 'goal': 0, 'waves': [None] * 12, 'interference': 0},
-        {'color': 'Black', 'name': '', 'goal': 0, 'waves': [None] * 12, 'interference': 0},
-        {'color': 'White', 'name': '', 'goal': 0, 'waves': [None] * 12, 'interference': 0},
-        {'color': 'Blue', 'name': '', 'goal': 0, 'waves': [None] * 12, 'interference': 0}
+        {'color': 'Red', 'name': '', 'goal': 0, 'waves': [None] * 20, 'interference': 0, 'interference_waves': []},
+        {'color': 'Yellow', 'name': '', 'goal': 0, 'waves': [None] * 20, 'interference': 0, 'interference_waves': []},
+        {'color': 'Black', 'name': '', 'goal': 0, 'waves': [None] * 20, 'interference': 0, 'interference_waves': []},
+        {'color': 'White', 'name': '', 'goal': 0, 'waves': [None] * 20, 'interference': 0, 'interference_waves': []},
+        {'color': 'Blue', 'name': '', 'goal': 0, 'waves': [None] * 20, 'interference': 0, 'interference_waves': []}
     ],
     'priority_order': []  # Empty = no priority established yet
 }
@@ -44,15 +44,45 @@ def calculate_rankings():
         valid_waves.sort(reverse=True)
         top_two = valid_waves[:2] if len(valid_waves) >= 2 else valid_waves
         
-        # Apply interference penalty
-        # interference: 0 = none, 1 = half of second wave, 2 = half of first wave
+        # Apply interference penalty - ISA Official Rules
+        # interference: 0 = None
+        # 1 = INT-1: Halve 2nd highest (non-priority)
+        # 2 = INT-2: Zero 2nd highest (priority)
+        # 3 = INT-3: Zero highest (last 5min interference)
+        # 4 = 2x INT (non-priority + priority): Halve highest, Zero 2nd
+        # 5 = 2x INT (both priority): Zero both (effectively DQ)
+        # 6 = DQ: Disqualified (total = 0)
         total = sum(top_two)
+        
         if surfer['interference'] == 1 and len(top_two) >= 2:
-            # INT-2: Deduct half of second best wave
+            # INT-1: Halve second highest scoring ride (non-priority)
             total -= (top_two[1] / 2)
-        elif surfer['interference'] == 2 and len(top_two) >= 1:
-            # INT-1: Deduct half of best wave
-            total -= (top_two[0] / 2)
+        elif surfer['interference'] == 2 and len(top_two) >= 2:
+            # INT-2: Second highest scoring ride = zero (priority)
+            total -= top_two[1]
+        elif surfer['interference'] == 3 and len(top_two) >= 1:
+            # INT-3: Highest scoring ride = zero (last 5min WSG/Olympic)
+            total -= top_two[0]
+        elif surfer['interference'] == 4:
+            # 2 Interferences: one non-priority + one priority
+            # INT-1 on highest + INT-2 on second highest
+            if len(top_two) >= 1:
+                total -= (top_two[0] / 2)  # Halve highest
+            if len(top_two) >= 2:
+                total -= top_two[1]  # Zero second highest
+        elif surfer['interference'] == 5:
+            # 2 Interferences: both priority OR one in last 5min
+            # Both rides = zero (effectively disqualified from scoring)
+            if len(top_two) >= 1:
+                total -= top_two[0]  # Zero highest
+            if len(top_two) >= 2:
+                total -= top_two[1]  # Zero second highest
+        elif surfer['interference'] == 6:
+            # Disqualification: total = 0
+            total = 0
+        
+        # Ensure total doesn't go negative
+        total = max(0, total)
         
         results.append({
             'idx': idx,
@@ -71,7 +101,7 @@ def calculate_rankings():
     def sort_key(result):
         # Create tuple: (total, wave1, wave2, wave3, ...)
         # Pad with 0s if fewer waves to ensure proper comparison
-        waves = result['all_waves_sorted'] + [0] * (12 - len(result['all_waves_sorted']))
+        waves = result['all_waves_sorted'] + [0] * (20 - len(result['all_waves_sorted']))
         return (result['total'],) + tuple(waves)
     
     results.sort(key=sort_key, reverse=True)
@@ -180,13 +210,34 @@ def toggle_interference():
     data = request.json
     surfer_idx = data['surfer_idx']
     
-    # Cycle through: 0 -> 1 -> 2 -> 0
-    current_heat['surfers'][surfer_idx]['interference'] = (current_heat['surfers'][surfer_idx]['interference'] + 1) % 3
+    # Cycle through: 0 -> 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 0
+    current_heat['surfers'][surfer_idx]['interference'] = (current_heat['surfers'][surfer_idx]['interference'] + 1) % 7
     
     rankings = calculate_rankings()
     return jsonify({'success': True, 
                    'interference': current_heat['surfers'][surfer_idx]['interference'],
                    'rankings': rankings})
+
+@app.route('/mark_interference_wave', methods=['POST'])
+def mark_interference_wave():
+    """Mark/unmark a specific wave with interference triangle (ISA visual marking)"""
+    data = request.json
+    surfer_idx = data['surfer_idx']
+    wave_idx = data['wave_idx']
+    
+    interference_waves = current_heat['surfers'][surfer_idx]['interference_waves']
+    
+    if wave_idx in interference_waves:
+        # Unmark
+        interference_waves.remove(wave_idx)
+    else:
+        # Mark with triangle
+        interference_waves.append(wave_idx)
+    
+    return jsonify({
+        'success': True,
+        'interference_waves': interference_waves
+    })
 
 @app.route('/get_rankings', methods=['GET'])
 def get_rankings():
@@ -255,8 +306,9 @@ def reopen_heat():
 @app.route('/reset_heat', methods=['POST'])
 def reset_heat():
     for surfer in current_heat['surfers']:
-        surfer['waves'] = [None] * 12
+        surfer['waves'] = [None] * 20
         surfer['interference'] = 0
+        surfer['interference_waves'] = []
     current_heat['metadata']['start_time'] = None
     current_heat['metadata']['is_closed'] = False
     current_heat['metadata']['notes'] = ''
@@ -283,7 +335,7 @@ def export_csv():
     
     # Full scoring grid
     writer.writerow(['FULL SCORING GRID'])
-    grid_header = ['Surfer'] + [f'W{i+1}' for i in range(12)]
+    grid_header = ['Surfer'] + [f'W{i+1}' for i in range(20)]
     writer.writerow(grid_header)
     
     for surfer in current_heat['surfers']:
@@ -299,9 +351,19 @@ def export_csv():
     writer.writerow(['Position', 'Surfer', 'Best Wave', '2nd Wave', 'Total', 'Interference'])
     
     # Data
+    interference_labels = {
+        0: 'None',
+        1: 'INT-1 (½ 2nd - Non-Priority)',
+        2: 'INT-2 (0 2nd - Priority)',
+        3: 'INT-3 (0 1st - Last 5min)',
+        4: '2x INT (½ 1st, 0 2nd)',
+        5: '2x INT (0 both)',
+        6: 'DISQUALIFIED'
+    }
+    
     for result in results:
         waves = result['top_waves'] + [None] * (2 - len(result['top_waves']))
-        interference_label = 'INT-2' if result['interference'] == 1 else 'INT-1' if result['interference'] == 2 else 'None'
+        interference_label = interference_labels.get(result['interference'], 'None')
         writer.writerow([
             result['position'],
             result['color'],
@@ -429,15 +491,26 @@ def export_pdf():
     else:
         elements.append(Spacer(1, 8))
     
-    # Full scoring grid
+    # Full scoring grid (limited to waves that were actually used)
     grid_title = Paragraph("<b>Full Scoring Grid</b>", styles['Heading2'])
     elements.append(grid_title)
     elements.append(Spacer(1, 8))
     
-    grid_data = [['Surfer'] + [f'W{i+1}' for i in range(12)]]
+    # Determine max wave used
+    max_wave_idx = 0
+    for surfer in current_heat['surfers']:
+        for idx, wave in enumerate(surfer['waves']):
+            if wave is not None:
+                max_wave_idx = max(max_wave_idx, idx)
+    
+    # Show up to max_wave_idx + 1, minimum 12
+    num_waves = max(12, max_wave_idx + 1)
+    
+    grid_data = [['Surfer'] + [f'W{i+1}' for i in range(num_waves)]]
     for surfer in current_heat['surfers']:
         row = [surfer['color']]
-        for wave in surfer['waves']:
+        for i in range(num_waves):
+            wave = surfer['waves'][i] if i < len(surfer['waves']) else None
             row.append(f"{wave:.1f}" if wave is not None else '-')
         grid_data.append(row)
     
@@ -463,9 +536,19 @@ def export_pdf():
     # Results table
     data = [['Position', 'Surfer', 'Best Wave', '2nd Wave', 'Total', 'Interference']]
     
+    interference_labels = {
+        0: 'None',
+        1: 'INT-1',
+        2: 'INT-2',
+        3: 'INT-3',
+        4: '2x INT',
+        5: '2x INT',
+        6: 'DQ'
+    }
+    
     for result in results:
         waves = result['top_waves'] + [None] * (2 - len(result['top_waves']))
-        interference_label = 'INT-2' if result['interference'] == 1 else 'INT-1' if result['interference'] == 2 else 'None'
+        interference_label = interference_labels.get(result['interference'], 'None')
         data.append([
             str(result['position']),
             result['color'],
