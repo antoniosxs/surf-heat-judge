@@ -1012,7 +1012,10 @@ None → INT-1 (½ 2nd, Non-Priority) → INT-2 (0 2nd, Priority) → INT-3 (0 1
                                     value="{{ surfer.waves[wave_idx] if surfer.waves[wave_idx] is not none else '' }}"
                                     onchange="updateScore(this)"
                                     ondblclick="markInterferenceWave({{ idx }}, {{ wave_idx }})"
-                                    title="Double-click to mark interference (ISA triangle)"
+                                    ontouchstart="startLongPress(event, {{ idx }}, {{ wave_idx }})"
+                                    ontouchend="cancelLongPress(event)"
+                                    ontouchmove="cancelLongPress(event)"
+                                    title="Double-click (desktop) or long-press (mobile) to mark interference"
                                     class="{{ 'interference-marked' if wave_idx in surfer.interference_waves else '' }}"
                                 >
                                 <span class="interference-triangle" id="triangle-{{ idx }}-{{ wave_idx }}" style="display: {{ 'block' if wave_idx in surfer.interference_waves else 'none' }};">▲</span>
@@ -1274,6 +1277,55 @@ None → INT-1 (½ 2nd, Non-Priority) → INT-2 (0 2nd, Priority) → INT-3 (0 1
                     highlightBestScores(data.rankings);
                 }
             });
+        }
+        
+        // Long-press functionality for mobile devices
+        let longPressTimer = null;
+        let longPressTarget = null;
+        
+        function startLongPress(event, surferIdx, waveIdx) {
+            // Prevent default to avoid any conflicts
+            event.preventDefault();
+            
+            const input = event.target;
+            longPressTarget = { surferIdx, waveIdx, input };
+            
+            // Add visual feedback
+            input.style.transform = 'scale(0.95)';
+            input.style.opacity = '0.7';
+            
+            // Set timer for long press (500ms)
+            longPressTimer = setTimeout(() => {
+                // Trigger the mark action
+                markInterferenceWave(surferIdx, waveIdx);
+                
+                // Reset visual feedback
+                input.style.transform = '';
+                input.style.opacity = '';
+                
+                // Vibrate if supported (mobile haptic feedback)
+                if (navigator.vibrate) {
+                    navigator.vibrate(50);
+                }
+                
+                longPressTimer = null;
+                longPressTarget = null;
+            }, 500);
+        }
+        
+        function cancelLongPress(event) {
+            if (longPressTimer) {
+                clearTimeout(longPressTimer);
+                longPressTimer = null;
+                
+                // Reset visual feedback
+                if (longPressTarget && longPressTarget.input) {
+                    longPressTarget.input.style.transform = '';
+                    longPressTarget.input.style.opacity = '';
+                }
+                
+                longPressTarget = null;
+            }
         }
         
         function markInterferenceWave(surferIdx, waveIdx) {
