@@ -1282,50 +1282,45 @@ None → INT-1 (½ 2nd, Non-Priority) → INT-2 (0 2nd, Priority) → INT-3 (0 1
         // Long-press functionality for mobile devices
         let longPressTimer = null;
         let longPressTarget = null;
+        let isLongPress = false;
         
         function startLongPress(event, surferIdx, waveIdx) {
-            // Prevent default to avoid any conflicts
-            event.preventDefault();
-            
+            // Don't prevent default - let normal input behavior work
             const input = event.target;
             longPressTarget = { surferIdx, waveIdx, input };
+            isLongPress = false;
             
-            // Add visual feedback
-            input.style.transform = 'scale(0.95)';
-            input.style.opacity = '0.7';
-            
-            // Set timer for long press (500ms)
+            // Set timer for long press (600ms - slightly longer to avoid accidents)
             longPressTimer = setTimeout(() => {
+                isLongPress = true;
+                
+                // Now we can prevent default behavior
+                event.preventDefault();
+                
                 // Trigger the mark action
                 markInterferenceWave(surferIdx, waveIdx);
-                
-                // Reset visual feedback
-                input.style.transform = '';
-                input.style.opacity = '';
                 
                 // Vibrate if supported (mobile haptic feedback)
                 if (navigator.vibrate) {
                     navigator.vibrate(50);
                 }
                 
+                // Blur the input to prevent keyboard from showing
+                input.blur();
+                
                 longPressTimer = null;
-                longPressTarget = null;
-            }, 500);
+            }, 600);
         }
         
         function cancelLongPress(event) {
             if (longPressTimer) {
                 clearTimeout(longPressTimer);
                 longPressTimer = null;
-                
-                // Reset visual feedback
-                if (longPressTarget && longPressTarget.input) {
-                    longPressTarget.input.style.transform = '';
-                    longPressTarget.input.style.opacity = '';
-                }
-                
-                longPressTarget = null;
             }
+            
+            // Reset
+            isLongPress = false;
+            longPressTarget = null;
         }
         
         function markInterferenceWave(surferIdx, waveIdx) {
